@@ -4,10 +4,17 @@ import { useNavigationStore } from '../store/navigation'
 interface StatusBarProps {
   mode: 'normal' | 'insert' | 'command'
   commandBuffer: string
+  keySequence?: string
+  filePath?: string
 }
 
-export const StatusBar: React.FC<StatusBarProps> = ({ mode, commandBuffer }) => {
-  const { currentPage, totalPages, currentView, filePath } = useNavigationStore()
+export const StatusBar: React.FC<StatusBarProps> = ({ 
+  mode, 
+  commandBuffer, 
+  keySequence = '',
+  filePath 
+}) => {
+  const { currentPage, totalPages, currentView } = useNavigationStore()
 
   const getModeDisplay = () => {
     switch (mode) {
@@ -18,7 +25,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ mode, commandBuffer }) => 
       case 'command':
         return commandBuffer
       default:
-        return ''
+        return '-- NORMAL --'
     }
   }
 
@@ -29,29 +36,49 @@ export const StatusBar: React.FC<StatusBarProps> = ({ mode, commandBuffer }) => 
       case 'outline':
         return '大纲'
       case 'text-only':
-        return '纯文本'
+        return '文本'
       default:
-        return '未知'
+        return '预览'
     }
   }
 
+  const getFileName = () => {
+    if (!filePath) return '未打开文件'
+    const parts = filePath.split('/')
+    return parts[parts.length - 1] || '未知文件'
+  }
+
   return (
-    <div className="bg-gray-800 text-white px-4 py-2 flex justify-between items-center text-sm">
+    <div className="h-6 bg-gray-800 text-white text-sm flex items-center justify-between px-2 font-mono">
+      {/* 左侧：模式和按键序列 */}
       <div className="flex items-center space-x-4">
-        <span className="font-mono">{getModeDisplay()}</span>
-        {filePath && (
-          <span className="text-gray-300">
-            {filePath.split('/').pop() || filePath}
+        <span className="text-green-400">{getModeDisplay()}</span>
+        {keySequence && mode === 'normal' && (
+          <span className="text-yellow-400 bg-gray-700 px-1 rounded">
+            {keySequence}
           </span>
         )}
       </div>
-      
-      <div className="flex items-center space-x-4">
-        <span>视图: {getViewDisplay()}</span>
+
+      {/* 中间：文件信息 */}
+      <div className="flex items-center space-x-2 text-gray-300">
+        <span>{getFileName()}</span>
         {totalPages > 0 && (
-          <span>
-            页面: {currentPage} / {totalPages}
+          <>
+            <span>|</span>
+            <span>{getViewDisplay()}</span>
+          </>
+        )}
+      </div>
+
+      {/* 右侧：页面信息 */}
+      <div className="flex items-center space-x-2">
+        {totalPages > 0 ? (
+          <span className="text-blue-400">
+            {currentPage}/{totalPages}
           </span>
+        ) : (
+          <span className="text-gray-500">-/-</span>
         )}
       </div>
     </div>
