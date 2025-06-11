@@ -19,9 +19,13 @@ export const useKeyboard = () => {
     totalPages
   } = useNavigationStore()
 
-  // 设置动作执行器
+  // 设置动作执行器和UI重置回调
   useEffect(() => {
     keySequenceStateMachine.setActionExecutor(executeAction)
+    keySequenceStateMachine.setUIResetCallback(() => {
+      console.log('状态机重置，清空UI显示')
+      setKeySequence('')
+    })
   }, [])
 
   // 执行快捷键动作
@@ -171,14 +175,14 @@ export const useKeyboard = () => {
     // 使用状态机处理按键
     const result = keySequenceStateMachine.processKey(key)
     
-    // 更新显示的按键序列
-    setKeySequence(keySequenceStateMachine.getCurrentSequence())
-    
-    // 如果有立即动作，执行它
+    // 如果有立即动作，执行它并清空显示
     if (result.action) {
       console.log('执行动作:', result.action)
       executeAction(result.action)
       setKeySequence('') // 清空显示
+    } else {
+      // 没有立即动作时，更新显示的按键序列
+      setKeySequence(keySequenceStateMachine.getCurrentSequence())
     }
   }
 

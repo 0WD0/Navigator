@@ -215,8 +215,15 @@ export class KeySequenceStateMachine {
     const currentAction = this.trie.getAction(this.currentSequence)
     const hasChildren = this.trie.hasChildren(this.currentSequence)
 
+    console.log('状态检查:', { 
+      hasAction: !!currentAction, 
+      hasChildren, 
+      currentAction: currentAction?.action 
+    })
+
     if (currentAction && !hasChildren) {
       // 情况1: 终止状态且没有后续按键 → 立即响应
+      console.log('立即执行动作:', currentAction.action)
       const action = currentAction
       this.reset()
       return { action, shouldContinue: false }
@@ -224,6 +231,7 @@ export class KeySequenceStateMachine {
       // 情况2: 终止状态但有后续按键 → 等待确认时间后响应
       const action = currentAction
       this.timeoutId = window.setTimeout(() => {
+        console.log('超时触发，执行动作:', action)
         this.reset()
         this.executeAction(action)
       }, this.CONFIRMATION_TIMEOUT)
@@ -231,6 +239,7 @@ export class KeySequenceStateMachine {
     } else {
       // 情况3: 非终止状态 → 等待更多输入，设置超时清空
       this.timeoutId = window.setTimeout(() => {
+        console.log('序列超时，重置状态机')
         this.reset()
       }, this.CONFIRMATION_TIMEOUT)
       return { action: null, shouldContinue: true }
@@ -244,6 +253,8 @@ export class KeySequenceStateMachine {
       clearTimeout(this.timeoutId)
       this.timeoutId = null
     }
+    // 通知UI重置状态
+    this.uiResetCallback()
   }
 
   // 获取当前序列（用于显示）
@@ -278,10 +289,18 @@ export class KeySequenceStateMachine {
 
   // 执行动作的回调（由外部注入）
   private executeAction: (action: KeyAction) => void = () => {}
+  
+  // UI状态重置回调（由外部注入）
+  private uiResetCallback: () => void = () => {}
 
   // 设置动作执行器
   setActionExecutor(executor: (action: KeyAction) => void) {
     this.executeAction = executor
+  }
+  
+  // 设置UI状态重置回调
+  setUIResetCallback(callback: () => void) {
+    this.uiResetCallback = callback
   }
 }
 
