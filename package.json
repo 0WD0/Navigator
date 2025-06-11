@@ -10,7 +10,15 @@
     "build": "npm run build:vite && npm run build:electron && electron-builder",
     "build:vite": "vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint src --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "prettier --write src/**/*.{ts,tsx,js,jsx,json,css,md}",
+    "format:check": "prettier --check src/**/*.{ts,tsx,js,jsx,json,css,md}",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist dist-electron",
+    "clean:install": "rimraf node_modules package-lock.json && npm install",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -29,7 +37,16 @@
     "concurrently": "^8.2.2",
     "wait-on": "^7.2.0",
     "typescript": "^5.2.2",
-    "electron-is-dev": "^2.0.0"
+    "electron-is-dev": "^2.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.54.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "prettier": "^3.1.0",
+    "rimraf": "^5.0.5"
   },
   "build": {
     "appId": "com.navigator.demo",
@@ -40,7 +57,19 @@
     "files": [
       "dist-electron/**/*",
       "dist/**/*"
-    ]
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Office"
+    }
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
