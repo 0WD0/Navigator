@@ -187,6 +187,9 @@ export class KeySequenceStateMachine {
 
   // 处理按键输入
   processKey(key: string): { action: KeyAction | null; shouldContinue: boolean } {
+    // 调试：打印状态机处理的按键
+    console.log('状态机处理按键:', key, '当前序列:', this.currentSequence)
+    
     // 清除之前的超时
     if (this.timeoutId) {
       clearTimeout(this.timeoutId)
@@ -195,10 +198,12 @@ export class KeySequenceStateMachine {
 
     // 添加当前按键到序列
     const testSequence = [...this.currentSequence, key]
+    console.log('测试序列:', testSequence)
 
     // 检查是否是有效的前缀
     if (!this.trie.isValidPrefix(testSequence)) {
       // 无效前缀，重置序列
+      console.log('无效前缀，重置序列')
       this.reset()
       return { action: null, shouldContinue: false }
     }
@@ -268,7 +273,7 @@ export class KeySequenceStateMachine {
 
   // 获取根节点（用于遍历）
   getRootNode(): TrieNode {
-    return this.root
+    return this.trie.getRootNode()
   }
 
   // 执行动作的回调（由外部注入）
