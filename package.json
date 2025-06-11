@@ -1,0 +1,45 @@
+{
+  "name": "navigator-demo",
+  "version": "0.1.0",
+  "description": "引用导航器 - 以批注为核心的知识管理系统",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
+    "dev:vite": "vite",
+    "dev:electron": "wait-on tcp:3000 && npm run build:electron && electron .",
+    "build": "npm run build:vite && npm run build:electron && electron-builder",
+    "build:vite": "vite build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "pdfjs-dist": "^3.11.174",
+    "zustand": "^4.4.4",
+    "lucide-react": "^0.294.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@vitejs/plugin-react": "^4.1.1",
+    "electron": "^27.1.3",
+    "electron-builder": "^24.6.4",
+    "vite": "^5.0.0",
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.2.0",
+    "typescript": "^5.2.2",
+    "electron-is-dev": "^2.0.0"
+  },
+  "build": {
+    "appId": "com.navigator.demo",
+    "productName": "Navigator Demo",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "dist/**/*"
+    ]
+  }
+}
