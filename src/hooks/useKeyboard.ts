@@ -153,10 +153,20 @@ export const useKeyboard = () => {
     // 处理特殊键映射
     if (key === 'Shift') return // 忽略单独的 Shift 键
     
-    // 处理大写字母（Shift + 字母）
-    if (event.shiftKey && key.length === 1 && key.match(/[a-z]/)) {
-      key = key.toUpperCase()
+    // 处理字母键（确保大小写正确）
+    if (key.length === 1 && key.match(/[a-zA-Z]/)) {
+      // 如果按下的是字母键，直接使用 event.key 的值
+      // 因为 event.key 已经正确处理了 shift 状态
+      key = event.key
     }
+
+    // 调试：打印按键信息
+    console.log('处理按键:', { 
+      key, 
+      originalKey: event.key, 
+      shiftKey: event.shiftKey, 
+      ctrlKey: event.ctrlKey 
+    })
 
     // 使用状态机处理按键
     const result = keySequenceStateMachine.processKey(key)
@@ -166,6 +176,7 @@ export const useKeyboard = () => {
     
     // 如果有立即动作，执行它
     if (result.action) {
+      console.log('执行动作:', result.action)
       executeAction(result.action)
       setKeySequence('') // 清空显示
     }
