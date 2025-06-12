@@ -4,12 +4,10 @@ import { PDFViewerWithLayout } from './components/PDFViewerWithLayout'
 import { StatusBar } from './components/StatusBar'
 import { HelpPanel } from './components/HelpPanel'
 import { useKeyboard } from './hooks/useKeyboard'
-import { PageInfo } from './types/pdf-analysis'
 
 function App() {
   const [filePath, setFilePath] = useState<string>('')
   const [showLayoutViewer, setShowLayoutViewer] = useState<boolean>(false)
-  const [mineruData, setMineruData] = useState<PageInfo[] | null>(null)
   const { 
     mode, 
     commandBuffer, 
@@ -30,54 +28,7 @@ function App() {
     }
   }
 
-  const handleMineruDataLoad = async () => {
-    try {
-      // 使用Electron的文件对话框选择MinerU数据文件
-      const selectedPath = await window.electronAPI.openFileDialog({
-        title: '选择MinerU数据文件',
-        filters: [
-          { name: 'MinerU数据文件', extensions: ['json'] },
-          { name: '所有文件', extensions: ['*'] }
-        ],
-        properties: ['openFile']
-      });
 
-      if (!selectedPath) {
-        console.log('用户取消了文件选择')
-        return
-      }
-
-      console.log('选择的文件:', selectedPath)
-
-      // 读取文件内容
-      const fileContent = await window.electronAPI.readFileAsText(selectedPath)
-      
-      if (!fileContent) {
-        alert('无法读取文件内容')
-        return
-      }
-
-      // 解析JSON数据
-      const data = JSON.parse(fileContent)
-      
-      // 检查是否是MinerU格式 (有pdf_info字段)
-      if (data.pdf_info && Array.isArray(data.pdf_info)) {
-        setMineruData(data.pdf_info)
-        console.log('已加载MinerU数据:', data.pdf_info.length, '页')
-        alert(`已成功加载MinerU数据\n文件: ${selectedPath.split('/').pop()}\n页数: ${data.pdf_info.length}`)
-      } else {
-        console.error('不是有效的MinerU数据格式')
-        alert('所选文件不是有效的MinerU格式\n请选择包含pdf_info字段的*_middle.json文件')
-      }
-    } catch (error) {
-      console.error('加载MinerU数据失败:', error)
-      if (error instanceof SyntaxError) {
-        alert('文件格式错误：无法解析JSON文件\n请确保选择的是有效的JSON文件')
-      } else {
-        alert('加载MinerU数据失败: ' + error)
-      }
-    }
-  }
 
   return (
     <div className="h-screen flex flex-col bg-gray-900">
@@ -103,20 +54,10 @@ function App() {
               {showLayoutViewer ? '文档视图' : '布局视图'}
             </button>
             <button
-              onClick={handleMineruDataLoad}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
-                mineruData
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              MinerU数据
-            </button>
-            <button
               onClick={handleFileOpen}
               className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
             >
-              打开文件
+              打开PDF
             </button>
           </div>
         </div>
@@ -127,7 +68,6 @@ function App() {
         {showLayoutViewer ? (
           <PDFViewerWithLayout 
             filePath={filePath} 
-            mineruData={mineruData}
             onFileOpen={handleFileOpen}
           />
         ) : (

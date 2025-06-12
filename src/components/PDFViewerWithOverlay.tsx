@@ -29,10 +29,10 @@ export const PDFViewerWithOverlay: React.FC<PDFViewerWithOverlayProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [overlayDimensions, setOverlayDimensions] = useState({ width: 0, height: 0, offsetX: 0, offsetY: 0 });
   
-  // 使用PDF查看器的当前页面状态
+  // 使用PDF查看器的当前页面状态（支持j/k快捷键跳转）
   const { currentPage } = useNavigationStore();
   
-  // 获取当前页面的布局数据 - 使用PDF查看器的页面状态
+  // 获取当前页面的布局数据
   const getCurrentPageLayout = () => {
     if (layoutData && currentPage - 1 >= 0 && currentPage - 1 < layoutData.length) {
       return layoutData[currentPage - 1]; // PDF页面从1开始，数组从0开始
@@ -53,7 +53,7 @@ export const PDFViewerWithOverlay: React.FC<PDFViewerWithOverlayProps> = ({
 
   // 更新叠加层尺寸和位置
   const updateOverlayDimensions = () => {
-    if (!containerRef.current || !currentLayout) return;
+    if (!containerRef.current || (!currentLayout && !currentMinerU)) return;
 
     const pdfCanvas = containerRef.current.querySelector('canvas.pdf-viewer') as HTMLCanvasElement;
     if (!pdfCanvas) return;
@@ -75,7 +75,7 @@ export const PDFViewerWithOverlay: React.FC<PDFViewerWithOverlayProps> = ({
     const timeoutId = setTimeout(updateOverlayDimensions, 300);
     
     return () => clearTimeout(timeoutId);
-  }, [currentPage, filePath, currentLayout]);
+  }, [currentPage, filePath, currentLayout, currentMinerU]);
 
   // 监听窗口大小变化和DOM变化
   useEffect(() => {
@@ -214,7 +214,7 @@ export const PDFViewerWithOverlay: React.FC<PDFViewerWithOverlayProps> = ({
             <>
               {/* 文本块 */}
               {showLayoutBoxes && currentMinerU.para_blocks.map((block, index) => {
-                if (!('lines' in block)) return null;
+                if (!block.bbox) return null;
                 const coords = convertCoordinates(block.bbox);
                 if (!coords) return null;
 
@@ -387,7 +387,7 @@ export const PDFViewerWithOverlay: React.FC<PDFViewerWithOverlayProps> = ({
             const categoryType = LAYOUT_CATEGORIES[detection.category_id as keyof typeof LAYOUT_CATEGORIES] || 'unknown';
 
             return (
-              <div key={`legacy-${currentPage}-${index}`}>
+                              <div key={`legacy-${currentPage}-${index}`}>
                 <div
                   className="absolute border-2 pointer-events-auto cursor-pointer transition-all duration-200 hover:shadow-md hover:opacity-80"
                   style={{
