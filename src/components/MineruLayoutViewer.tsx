@@ -1,6 +1,7 @@
 import React from 'react';
 import { PageInfo } from '@/types/pdf-analysis';
 import { DocumentContentList } from '@/types/document.types';
+import { useNavigationStore } from '@/store/navigation';
 
 interface MineruLayoutViewerProps {
   mineruData: PageInfo[] | null;
@@ -25,6 +26,14 @@ export const MineruLayoutViewer: React.FC<MineruLayoutViewerProps> = ({
   onToggleTextContent,
   className = ''
 }) => {
+  // 使用 navigation store 来同步 PDF 页面
+  const { setCurrentPage } = useNavigationStore();
+
+  // 处理页面变化，同时更新本地状态和 navigation store
+  const handlePageChange = (page: number) => {
+    onPageChange(page); // 更新本地状态
+    setCurrentPage(page + 1); // 更新 navigation store (store 使用 1-based，这里是 0-based)
+  };
   // 获取当前页面的MinerU数据
   const getCurrentPageData = () => {
     if (!mineruData || selectedPage >= mineruData.length) {
@@ -97,7 +106,7 @@ export const MineruLayoutViewer: React.FC<MineruLayoutViewerProps> = ({
             <label className="text-sm font-medium">页面:</label>
             <select
               value={selectedPage}
-              onChange={(e) => onPageChange(Number(e.target.value))}
+              onChange={(e) => handlePageChange(Number(e.target.value))}
               className="px-2 py-1 border rounded text-sm"
             >
               {mineruData.map((_, index) => (

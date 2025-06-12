@@ -230,7 +230,6 @@ export const PDFViewerWithLayout: React.FC<PDFViewerWithLayoutProps> = ({
                   filePath={filePath}
                   layoutData={null}
                   mineruData={layoutManager.files.mineruData || null}
-                  selectedPage={layoutManager.selectedPage}
                   showLayoutBoxes={layoutManager.showLayoutBoxes}
                   showTextContent={layoutManager.showTextContent}
                   showImageRegions={true}

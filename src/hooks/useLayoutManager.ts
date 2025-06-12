@@ -1,7 +1,8 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { DocumentContentList } from '@/types/document.types';
 import { PageInfo } from '@/types/pdf-analysis';
 import { DocumentParserService } from '@/services/document-parser.service';
+import { useNavigationStore } from '@/store/navigation';
 
 interface LoadedFiles {
   mineruData: PageInfo[] | null;
@@ -22,6 +23,19 @@ export const useLayoutManager = () => {
   const [showTableRegions, setShowTableRegions] = useState(false);
   const [isLayoutViewVisible, setIsLayoutViewVisible] = useState(false);
   const [isOutlineVisible, setIsOutlineVisible] = useState(false);
+
+  // 获取 navigation store 的状态
+  const { currentPage } = useNavigationStore();
+
+  // 监听 navigation store 的 currentPage 变化，同步到本地 selectedPage
+  useEffect(() => {
+    if (files.mineruData && currentPage >= 1) {
+      const newSelectedPage = currentPage - 1; // navigation store 是 1-based，这里是 0-based
+      if (newSelectedPage >= 0 && newSelectedPage < files.mineruData.length && newSelectedPage !== selectedPage) {
+        setSelectedPage(newSelectedPage);
+      }
+    }
+  }, [currentPage, files.mineruData, selectedPage]);
 
   // 创建文件选择器
   const createFileSelector = useCallback((accept: string = '.json'): Promise<File | null> => {
