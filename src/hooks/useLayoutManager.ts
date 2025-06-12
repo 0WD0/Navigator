@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { DocumentModelData, DocumentMiddleData, DocumentContentList } from '@/types/document.types';
+import { DocumentParserService } from '@/services/document-parser.service';
 
 interface LoadedFiles {
   modelData: DocumentModelData[] | null;
@@ -226,10 +227,28 @@ export const useLayoutManager = () => {
     hasFiles: !!(files.modelData && files.middleData && files.contentList),
     totalPages: files.modelData?.length || 0,
     
-    // 分析数据（暂时为null，后续可以添加实际的分析逻辑）
-    analysis: files.modelData ? {
-      outline: [], // TODO: 从数据中提取大纲
-      structuredContent: [] // TODO: 从数据中提取结构化内容
-    } : null
+    // 分析数据
+    analysis: useMemo(() => {
+      if (!files.modelData || !files.middleData || !files.contentList) {
+        return null;
+      }
+
+      const parser = DocumentParserService.getInstance();
+      
+      // 解析文档大纲
+      try {
+        const outline = parser.buildOutline(files.contentList);
+        return {
+          totalPages: files.modelData.length,
+          outline,
+          searchIndex: new Map(),
+          pageTexts: new Map(),
+          structuredContent: files.contentList
+        };
+      } catch (error) {
+        console.error('解析文档时出错:', error);
+        return null;
+      }
+    }, [files.modelData, files.middleData, files.contentList])
   };
 }; 

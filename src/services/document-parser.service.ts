@@ -43,14 +43,15 @@ export class DocumentParserService {
   }
 
   /**
-   * 从内容列表构建文档大纲
+   * 从内容列表构建文档大纲（仅基于text_level字段）
    */
-  private buildOutline(contentList: ContentItem[]): DocumentOutline[] {
+  public buildOutline(contentList: ContentItem[]): DocumentOutline[] {
     const outline: DocumentOutline[] = [];
     const stack: DocumentOutline[] = [];
 
     for (const item of contentList) {
-      if (item.text_level && item.text_level <= 3) { // 标题级别1-3
+      // 只处理有text_level字段且级别在1-3之间的项目
+      if (item.text_level && item.text_level >= 1 && item.text_level <= 3) {
         const outlineItem: DocumentOutline = {
           title: item.text.trim(),
           level: item.text_level,
@@ -58,24 +59,190 @@ export class DocumentParserService {
           children: []
         };
 
-        // 处理层级关系
+        // 处理层级关系：移除所有级别大于等于当前级别的项目
         while (stack.length > 0 && stack[stack.length - 1].level >= outlineItem.level) {
           stack.pop();
         }
 
+        // 如果栈为空，说明这是顶级项目
         if (stack.length === 0) {
           outline.push(outlineItem);
         } else {
+          // 否则作为栈顶项目的子项
           const parent = stack[stack.length - 1];
           if (!parent.children) parent.children = [];
           parent.children.push(outlineItem);
         }
 
+        // 将当前项目推入栈中
         stack.push(outlineItem);
       }
     }
 
     return outline;
+  }
+
+  /**
+   * 获取大纲统计信息
+   */
+  public getOutlineStats(outline: DocumentOutline[]): {
+    totalItems: number;
+    levelCounts: Record<number, number>;
+    maxDepth: number;
+    pageSpan: { start: number; end: number };
+  } {
+    let totalItems = 0;
+    const levelCounts: Record<number, number> = {};
+    let maxDepth = 0;
+    let minPage = Infinity;
+    let maxPage = -1;
+
+    const traverse = (items: DocumentOutline[], depth: number = 0) => {
+      maxDepth = Math.max(maxDepth, depth);
+      
+      for (const item of items) {
+        totalItems++;
+        levelCounts[item.level] = (levelCounts[item.level] || 0) + 1;
+        minPage = Math.min(minPage, item.pageIndex);
+        maxPage = Math.max(maxPage, item.pageIndex);
+        
+        if (item.children && item.children.length > 0) {
+          traverse(item.children, depth + 1);
+        }
+      }
+    };
+
+    traverse(outline);
+
+    return {
+      totalItems,
+      levelCounts,
+      maxDepth,
+      pageSpan: {
+        start: minPage === Infinity ? 0 : minPage,
+        end: maxPage === -1 ? 0 : maxPage
+      }
+    };
+  }
+
+  /**
+   * 在大纲中搜索标题
+   */
+  public searchOutline(outline: DocumentOutline[], query: string): DocumentOutline[] {
+    const results: DocumentOutline[] = [];
+    const searchTerm = query.toLowerCase().trim();
+
+    if (!searchTerm) return [];
+
+    const search = (items: DocumentOutline[]) => {
+      for (const item of items) {
+        if (item.title.toLowerCase().includes(searchTerm)) {
+          results.push(item);
+        }
+        
+        if (item.children && item.children.length > 0) {
+          search(item.children);
+        }
+      }
+    };
+
+    search(outline);
+    return results;
+  }
+
+  /**
+   * 获取指定页面的大纲项目
+   */
+  public getOutlineItemsForPage(outline: DocumentOutline[], pageIndex: number): DocumentOutline[] {
+    const results: DocumentOutline[] = [];
+
+    const search = (items: DocumentOutline[]) => {
+      for (const item of items) {
+        if (item.pageIndex === pageIndex) {
+          results.push(item);
+        }
+        
+        if (item.children && item.children.length > 0) {
+          search(item.children);
+        }
+      }
+    };
+
+    search(outline);
+    return results;
+  }
+
+  /**
+   * 扁平化大纲结构（用于导出或搜索）
+   */
+  public flattenOutline(outline: DocumentOutline[]): Array<DocumentOutline & { depth: number; path: string }> {
+    const flattened: Array<DocumentOutline & { depth: number; path: string }> = [];
+
+    const flatten = (items: DocumentOutline[], depth: number = 0, parentPath: string = '') => {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const currentPath = parentPath ? `${parentPath}.${i + 1}` : `${i + 1}`;
+        
+        flattened.push({
+          ...item,
+          depth,
+          path: currentPath
+        });
+
+        if (item.children && item.children.length > 0) {
+          flatten(item.children, depth + 1, currentPath);
+        }
+      }
+    };
+
+    flatten(outline);
+    return flattened;
+  }
+
+  /**
+   * 验证大纲结构的完整性
+   */
+  public validateOutline(outline: DocumentOutline[]): {
+    isValid: boolean;
+    issues: string[];
+  } {
+    const issues: string[] = [];
+
+    const validate = (items: DocumentOutline[], parentLevel: number = 0) => {
+      for (const item of items) {
+        // 检查标题是否为空
+        if (!item.title || item.title.trim().length === 0) {
+          issues.push(`发现空标题项目（页面 ${item.pageIndex + 1}）`);
+        }
+
+        // 检查级别是否合理
+        if (item.level < 1 || item.level > 3) {
+          issues.push(`标题级别超出范围 (${item.level})：${item.title}`);
+        }
+
+        // 检查级别跳跃是否过大
+        if (parentLevel > 0 && item.level > parentLevel + 1) {
+          issues.push(`标题级别跳跃过大：从 ${parentLevel} 级跳到 ${item.level} 级 - ${item.title}`);
+        }
+
+        // 检查页面索引是否有效
+        if (item.pageIndex < 0) {
+          issues.push(`无效的页面索引 (${item.pageIndex})：${item.title}`);
+        }
+
+        // 递归检查子项目
+        if (item.children && item.children.length > 0) {
+          validate(item.children, item.level);
+        }
+      }
+    };
+
+    validate(outline);
+
+    return {
+      isValid: issues.length === 0,
+      issues
+    };
   }
 
   /**
