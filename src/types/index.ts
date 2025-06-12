@@ -40,6 +40,12 @@ declare global {
       checkFileExists: (filePath: string) => Promise<boolean>
       getAppVersion: () => Promise<string>
       onMenuAction: (callback: (event: any, action: string) => void) => () => void
+      openFileDialog: (options: {
+        title?: string;
+        filters?: Array<{ name: string; extensions: string[] }>;
+        properties?: string[];
+      }) => Promise<string | null>
+      readFileAsText: (filePath: string) => Promise<string>
     }
   }
 } 

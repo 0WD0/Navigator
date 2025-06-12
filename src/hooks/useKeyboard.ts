@@ -16,7 +16,7 @@ export const useKeyboard = () => {
     previousPage,
     jumpToPage,
     setCurrentView,
-    currentPage,
+    currentPage: _currentPage,
     totalPages
   } = useNavigationStore()
 

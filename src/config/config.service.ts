@@ -93,7 +93,7 @@ export class ConfigService {
     const merged = { ...defaultConfig };
     
     for (const key in userConfig) {
-      if (userConfig.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(userConfig, key)) {
         const userValue = userConfig[key as keyof AppConfig];
         const defaultValue = defaultConfig[key as keyof AppConfig];
         

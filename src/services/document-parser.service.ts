@@ -7,7 +7,6 @@ import {
   SearchResult,
   BoundingBox,
   ContentItem,
-  TextBlock,
   LAYOUT_CATEGORIES
 } from '@/types/document.types';
 
@@ -26,7 +25,7 @@ export class DocumentParserService {
    */
   public async parseDocument(
     modelData: DocumentModelData[],
-    middleData: DocumentMiddleData,
+    _middleData: DocumentMiddleData,
     contentList: DocumentContentList
   ): Promise<DocumentAnalysis> {
     

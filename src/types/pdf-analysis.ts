@@ -7,13 +7,26 @@ export type BoundingBox = [number, number, number, number]; // [x1, y1, x2, y2]
 export interface PageInfo {
   page_idx: number;           // 页码，从0开始
   page_size: [number, number]; // [宽度, 高度]
-  layout_bboxes: LayoutBox[];  // 布局分割结果
-  para_blocks: Block[];       // 段落块结果
-  images: ImageBlock[];       // 图像块
-  tables: TableBlock[];       // 表格块
-  interline_equations: EquationBlock[]; // 行间公式
-  discarded_blocks: Block[];  // 需要丢弃的块
-  _analysis_metadata?: AnalysisMetadata;
+  layout_bboxes: BoundingBox[];  // 布局分割结果
+  para_blocks: Array<FirstLevelBlock>;       // 段落块结果
+  images: Array<ImageBlock>;       // 图像块
+  tables: Array<TableBlock>;       // 表格块
+  interline_equations: Array<EquationBlock>; // 行间公式
+  discarded_blocks: Array<any>;  // 需要丢弃的块
+  
+  // 可选的分析元数据
+  _analysis_metadata?: {
+    processing_time?: number;
+    confidence_scores?: {
+      overall_confidence: number;
+      layout_confidence: number;
+      ocr_confidence: number;
+    };
+    model_versions?: {
+      layout_model: string;
+      ocr_model: string;
+    };
+  };
 }
 
 // 分析元数据
@@ -26,36 +39,32 @@ export interface AnalysisMetadata {
 
 // 布局分析
 export interface LayoutBox {
-  layout_bbox: BoundingBox;
-  layout_label: 'V' | 'H';    // 垂直(V)或水平(H)布局方向
-  sub_layout: LayoutBox[];    // 子布局
+  bbox: BoundingBox;
+  type: string;
   confidence?: number;
 }
 
 // 块类型枚举
 export enum BlockType {
-  // 一级块类型
   TABLE = 'table',
   IMAGE = 'image',
-  
-  // 二级块类型
-  IMAGE_BODY = 'image_body',           // 图像主体
-  IMAGE_CAPTION = 'image_caption',     // 图像描述
-  TABLE_BODY = 'table_body',           // 表格主体
-  TABLE_CAPTION = 'table_caption',     // 表格描述
-  TABLE_FOOTNOTE = 'table_footnote',   // 表格脚注
-  TEXT = 'text',                       // 文本块
-  TITLE = 'title',                     // 标题块
-  INTERLINE_EQUATION = 'interline_equation' // 块级公式
+  TEXT = 'text',
+  TITLE = 'title',
+  IMAGE_BODY = 'image_body',
+  IMAGE_CAPTION = 'image_caption',
+  TABLE_BODY = 'table_body',
+  TABLE_CAPTION = 'table_caption',
+  TABLE_FOOTNOTE = 'table_footnote',
+  INTERLINE_EQUATION = 'interline_equation'
 }
 
 // 片段类型枚举
 export enum SpanType {
-  TEXT = 'text',                       // 文本
-  IMAGE = 'image',                     // 图像
-  TABLE = 'table',                     // 表格
-  INLINE_EQUATION = 'inline_equation', // 行内公式
-  INTERLINE_EQUATION = 'interline_equation' // 块级公式
+  TEXT = 'text',
+  IMAGE = 'image',
+  TABLE = 'table',
+  INLINE_EQUATION = 'inline_equation',
+  INTERLINE_EQUATION = 'interline_equation'
 }
 
 // 基础块接口
@@ -205,32 +214,38 @@ export interface BlockRelation {
   created_at: Date;
 }
 
-// 分析配置
-export interface AnalysisConfig {
-  enable_ocr: boolean;
-  enable_table_detection: boolean;
-  enable_formula_detection: boolean;
-  enable_image_analysis: boolean;
-  language: string;
-  quality_threshold: number;
-  max_processing_time?: number; // 毫秒
+// 解析接口
+export interface PDFAnalysisEngine {
+  name: string;
+  version: string;
+  analyze: (_file: string, _config?: AnalysisConfig) => Promise<PageInfo[]>;
 }
 
-// 处理器接口
-export interface PDFAnalysisProcessor {
-  analyze(file: File, config: AnalysisConfig): Promise<PageInfo[]>;
-  analyzePages(pages: number[], config: AnalysisConfig): Promise<PageInfo[]>;
-  getProgress(): AnalysisState;
-  cancel(): void;
+export interface AnalysisConfig {
+  enableOCR?: boolean;
+  enableLayout?: boolean;
+  enableTables?: boolean;
+  outputFormat?: 'json' | 'markdown';
+  quality?: 'fast' | 'balanced' | 'accurate';
+}
+
+// 批处理接口
+export interface BatchProcessor {
+  processFiles: (_pages: PageInfo[], _config?: AnalysisConfig) => Promise<ProcessedResult[]>;
+}
+
+export interface ProcessedResult {
+  pageIndex: number;
+  success: boolean;
+  error?: string;
+  data?: PageInfo;
 }
 
 // 缓存接口
 export interface AnalysisCache {
-  get(fileHash: string): PageInfo[] | null;
-  set(fileHash: string, result: PageInfo[]): void;
-  delete(fileHash: string): void;
-  clear(): void;
-  size(): number;
+  get: (_fileHash: string) => Promise<PageInfo[] | null>;
+  set: (_fileHash: string, _result: PageInfo[]) => Promise<void>;
+  clear: (_fileHash?: string) => Promise<void>;
 }
 
 // 导出配置

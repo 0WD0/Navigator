@@ -1,92 +1,35 @@
-import { useState, useEffect, useCallback } from 'react';
-import { DocumentParserService } from '@/services/document-parser.service';
-import {
-  DocumentModelData,
-  DocumentMiddleData, 
-  DocumentContentList,
-  DocumentAnalysis,
-  SearchResult
-} from '@/types/document.types';
+import { useState } from 'react';
+import { PageInfo } from '@/types/pdf-analysis';
 
-interface UseDocumentParserReturn {
-  analysis: DocumentAnalysis | null;
-  isLoading: boolean;
-  error: string | null;
-  loadDocument: (
-    modelData: DocumentModelData[],
-    middleData: DocumentMiddleData,
-    contentList: DocumentContentList
-  ) => Promise<void>;
-  search: (query: string, options?: {
-    caseSensitive?: boolean;
-    wholeWord?: boolean;
-    maxResults?: number;
-  }) => SearchResult[];
-  exportAnalysis: () => string | null;
-}
-
-export function useDocumentParser(): UseDocumentParserReturn {
-  const [analysis, setAnalysis] = useState<DocumentAnalysis | null>(null);
+export const useDocumentParser = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<PageInfo[] | null>(null);
 
-  const parser = DocumentParserService.getInstance();
-
-  const loadDocument = useCallback(async (
-    modelData: DocumentModelData[],
-    middleData: DocumentMiddleData,
-    contentList: DocumentContentList
-  ) => {
+  const parseDocument = async (filePath: string) => {
     setIsLoading(true);
     setError(null);
-
+    
     try {
-      const result = await parser.parseDocument(modelData, middleData, contentList);
-      setAnalysis(result);
+      // TODO: 实际的文档解析逻辑
+      console.log('解析文档:', filePath);
+      
+      // 模拟解析延迟
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 这里应该调用实际的解析服务
+      setData([]);
     } catch (err) {
-      const message = err instanceof Error ? err.message : '文档解析失败';
-      setError(message);
-      console.error('Document parsing error:', err);
+      setError(err instanceof Error ? err.message : '解析失败');
     } finally {
       setIsLoading(false);
     }
-  }, [parser]);
-
-  const search = useCallback((
-    query: string,
-    options?: {
-      caseSensitive?: boolean;
-      wholeWord?: boolean;
-      maxResults?: number;
-    }
-  ): SearchResult[] => {
-    if (!analysis) return [];
-    
-    try {
-      return parser.search(analysis, query, options);
-    } catch (err) {
-      console.error('Search error:', err);
-      return [];
-    }
-  }, [analysis, parser]);
-
-  const exportAnalysis = useCallback((): string | null => {
-    if (!analysis) return null;
-    
-    try {
-      return parser.exportAnalysis(analysis);
-    } catch (err) {
-      console.error('Export error:', err);
-      return null;
-    }
-  }, [analysis, parser]);
+  };
 
   return {
-    analysis,
     isLoading,
     error,
-    loadDocument,
-    search,
-    exportAnalysis
+    data,
+    parseDocument
   };
-} 
+}; 

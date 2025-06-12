@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { PDFViewer } from './PDFViewer';
 import { DocumentModelData, LAYOUT_CATEGORIES } from '@/types/document.types';
-import { PageInfo, BlockType, SpanType } from '@/types/pdf-analysis';
+import { PageInfo, BlockType } from '@/types/pdf-analysis';
 import { useNavigationStore } from '@/store/navigation';
 
 interface PDFViewerWithOverlayProps {
@@ -20,7 +20,6 @@ export const PDFViewerWithOverlay: React.FC<PDFViewerWithOverlayProps> = ({
   filePath,
   layoutData,
   mineruData,
-  selectedPage = 0,
   showLayoutBoxes = true,
   showTextContent = false,
   showImageRegions = false,

@@ -20,18 +20,18 @@ interface ImportMeta {
 // Electron API类型定义
 interface ElectronAPI {
   openPdfFile: () => Promise<string | null>;
-  readPdfFile: (filePath: string) => Promise<ArrayBuffer>;
-  checkFileExists: (filePath: string) => Promise<boolean>;
+  readPdfFile: (_filePath: string) => Promise<ArrayBuffer>;
+  checkFileExists: (_filePath: string) => Promise<boolean>;
   getAppVersion: () => Promise<string>;
-  onMenuAction: (callback: (event: any, action: string) => void) => () => void;
+  onMenuAction: (_callback: (_event: any, _action: string) => void) => () => void;
   
   // 新增的API
-  openFileDialog: (options: {
+  openFileDialog: (_options: {
     title?: string;
     filters?: Array<{ name: string; extensions: string[] }>;
     properties?: string[];
   }) => Promise<string | null>;
-  readFileAsText: (filePath: string) => Promise<string>;
+  readFileAsText: (_filePath: string) => Promise<string>;
 }
 
 declare global {

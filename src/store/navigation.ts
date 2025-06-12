@@ -26,7 +26,7 @@ const initialState: NavigationState = {
   currentPage: 1,
   totalPages: 0,
   currentView: 'preview',
-  filePath: undefined
+  filePath: ''
 }
 
 export const useNavigationStore = create<NavigationStore>((set, get) => ({

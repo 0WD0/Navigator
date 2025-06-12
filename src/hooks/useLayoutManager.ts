@@ -1,6 +1,5 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { DocumentModelData, DocumentMiddleData, DocumentContentList } from '@/types/document.types';
-import { useDocumentParser } from './useDocumentParser';
 
 interface LoadedFiles {
   modelData: DocumentModelData[] | null;
@@ -8,35 +7,21 @@ interface LoadedFiles {
   contentList: DocumentContentList | null;
 }
 
-interface LayoutManagerState {
-  files: LoadedFiles;
-  isLayoutViewVisible: boolean;
-  isOutlineVisible: boolean;
-  selectedPage: number;
-  showLayoutBoxes: boolean;
-  showTextContent: boolean;
-  isLoading: boolean;
-}
-
-export function useLayoutManager() {
-  const [state, setState] = useState<LayoutManagerState>({
-    files: {
-      modelData: null,
-      middleData: null,
-      contentList: null
-    },
-    isLayoutViewVisible: false,
-    isOutlineVisible: false,
-    selectedPage: 0,
-    showLayoutBoxes: true,
-    showTextContent: true,
-    isLoading: false
+export const useLayoutManager = () => {
+  const [files, setFiles] = useState<LoadedFiles>({
+    modelData: null,
+    middleData: null,
+    contentList: null
   });
-
-  const { analysis, loadDocument } = useDocumentParser();
-
-  // 文件选择器引用
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedPage, setSelectedPage] = useState(0);
+  const [showLayoutBoxes, setShowLayoutBoxes] = useState(true);
+  const [showTextContent, setShowTextContent] = useState(false);
+  const [showImageRegions, setShowImageRegions] = useState(false);
+  const [showTableRegions, setShowTableRegions] = useState(false);
+  const [isLayoutViewVisible, setIsLayoutViewVisible] = useState(false);
+  const [isOutlineVisible, setIsOutlineVisible] = useState(false);
 
   // 创建文件选择器
   const createFileSelector = useCallback((accept: string): Promise<File | null> => {
@@ -52,26 +37,52 @@ export function useLayoutManager() {
     });
   }, []);
 
-  // 读取文件内容
-  const readFileContent = useCallback((file: File): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const content = JSON.parse(e.target?.result as string);
-          resolve(content);
-        } catch (error) {
-          reject(new Error(`文件解析失败: ${error}`));
-        }
-      };
-      reader.onerror = () => reject(new Error('文件读取失败'));
-      reader.readAsText(file);
-    });
-  }, []);
+  const loadFiles = async (
+    modelFile: File,
+    middleFile: File,
+    contentFile: File
+  ) => {
+    setIsLoading(true);
+    setError(null);
 
-  // 加载布局文件
+    try {
+      const readFile = (file: File): Promise<any> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const content = JSON.parse(e.target?.result as string);
+              resolve(content);
+            } catch {
+              reject(new Error(`解析文件 ${file.name} 失败`));
+            }
+          };
+          reader.onerror = () => reject(new Error(`读取文件 ${file.name} 失败`));
+          reader.readAsText(file);
+        });
+      };
+
+      const [modelData, middleData, contentList] = await Promise.all([
+        readFile(modelFile),
+        readFile(middleFile),
+        readFile(contentFile)
+      ]);
+
+      setFiles({ modelData, middleData, contentList });
+      setSelectedPage(0); // 重置到第一页
+      setIsLayoutViewVisible(true); // 自动显示布局视图
+    } catch (err) {
+      const _errorMessage = err instanceof Error ? err.message : '加载文件时发生未知错误';
+      setError(_errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 加载布局文件（通过文件选择器）
   const loadLayoutFiles = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true }));
+    setIsLoading(true);
+    setError(null);
     
     try {
       console.log('开始选择布局文件...');
@@ -98,113 +109,63 @@ export function useLayoutManager() {
         return;
       }
 
-      // 并行读取文件内容
-      console.log('正在读取文件内容...');
-      const [modelData, middleData, contentList] = await Promise.all([
-        readFileContent(modelFile),
-        readFileContent(middleFile),
-        readFileContent(contentFile)
-      ]);
-
-      // 验证文件格式
-      if (!Array.isArray(modelData)) {
-        throw new Error('model.json 格式不正确，应该是数组');
-      }
-      if (!middleData || typeof middleData !== 'object') {
-        throw new Error('middle.json 格式不正确');
-      }
-      if (!Array.isArray(contentList)) {
-        throw new Error('content_list.json 格式不正确，应该是数组');
-      }
-
-      // 更新状态
-      const newFiles = { modelData, middleData, contentList };
-      setState(prev => ({
-        ...prev,
-        files: newFiles,
-        isLayoutViewVisible: true, // 自动显示布局视图
-        selectedPage: 0
-      }));
-
-      // 解析文档
-      console.log('正在解析文档...');
-      await loadDocument(modelData, middleData, contentList);
-
+      // 使用loadFiles函数加载
+      await loadFiles(modelFile, middleFile, contentFile);
+      
       console.log('文件加载成功！');
-      
-      // 显示成功提示
-      if (typeof window !== 'undefined' && (window as any).electron) {
-        (window as any).electron.showNotification('布局文件加载成功', '已成功加载并解析文档布局数据');
-      }
-
-    } catch (error) {
-      console.error('文件加载失败:', error);
-      const errorMessage = error instanceof Error ? error.message : '未知错误';
-      
-      // 显示错误提示
-      if (typeof window !== 'undefined' && (window as any).electron) {
-        (window as any).electron.showErrorDialog('文件加载失败', errorMessage);
-      } else {
-        alert(`文件加载失败: ${errorMessage}`);
-      }
+    } catch (err) {
+      const _errorMessage = err instanceof Error ? err.message : '加载文件时发生未知错误';
+      setError(_errorMessage);
     } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
+      setIsLoading(false);
     }
-  }, [createFileSelector, readFileContent, loadDocument]);
+  }, [createFileSelector]);
 
   // 切换布局视图
   const toggleLayoutView = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      isLayoutViewVisible: !prev.isLayoutViewVisible
-    }));
+    setIsLayoutViewVisible(prev => !prev);
   }, []);
 
   // 切换大纲视图
   const toggleOutline = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      isOutlineVisible: !prev.isOutlineVisible
-    }));
-  }, []);
-
-  // 设置选中页面
-  const setSelectedPage = useCallback((page: number) => {
-    setState(prev => ({
-      ...prev,
-      selectedPage: Math.max(0, Math.min(page, (prev.files.modelData?.length || 1) - 1))
-    }));
+    setIsOutlineVisible(prev => !prev);
   }, []);
 
   // 切换布局框显示
   const toggleLayoutBoxes = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      showLayoutBoxes: !prev.showLayoutBoxes
-    }));
+    setShowLayoutBoxes(prev => !prev);
   }, []);
 
   // 切换文本内容显示
   const toggleTextContent = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      showTextContent: !prev.showTextContent
-    }));
+    setShowTextContent(prev => !prev);
   }, []);
+
+  const clearFiles = () => {
+    setFiles({
+      modelData: null,
+      middleData: null,
+      contentList: null
+    });
+    setSelectedPage(0);
+    setError(null);
+    setIsLayoutViewVisible(false);
+    setIsOutlineVisible(false);
+  };
 
   // 获取当前页面的布局信息
   const getCurrentPageLayout = useCallback(() => {
-    if (!state.files.modelData || state.selectedPage >= state.files.modelData.length) {
+    if (!files.modelData || selectedPage >= files.modelData.length) {
       return null;
     }
-    return state.files.modelData[state.selectedPage];
-  }, [state.files.modelData, state.selectedPage]);
+    return files.modelData[selectedPage];
+  }, [files.modelData, selectedPage]);
 
   // 获取当前页面的内容
   const getCurrentPageContent = useCallback(() => {
-    if (!state.files.contentList) return [];
-    return state.files.contentList.filter(item => item.page_idx === state.selectedPage);
-  }, [state.files.contentList, state.selectedPage]);
+    if (!files.contentList) return [];
+    return files.contentList.filter(item => item.page_idx === selectedPage);
+  }, [files.contentList, selectedPage]);
 
   // 处理快捷键动作
   const handleKeyAction = useCallback((action: string) => {
@@ -218,23 +179,43 @@ export function useLayoutManager() {
       case 'layout.toggleOutline':
         toggleOutline();
         break;
+      case 'layout.toggleLayoutBoxes':
+        toggleLayoutBoxes();
+        break;
+      case 'layout.toggleTextContent':
+        toggleTextContent();
+        break;
       default:
         console.log('未处理的布局动作:', action);
     }
-  }, [loadLayoutFiles, toggleLayoutView, toggleOutline]);
+  }, [loadLayoutFiles, toggleLayoutView, toggleOutline, toggleLayoutBoxes, toggleTextContent]);
 
   return {
     // 状态
-    ...state,
-    analysis,
+    files,
+    isLoading,
+    error,
+    selectedPage,
+    showLayoutBoxes,
+    showTextContent,
+    showImageRegions,
+    showTableRegions,
+    isLayoutViewVisible,
+    isOutlineVisible,
     
-    // 动作
+    // 动作函数
+    setSelectedPage,
+    setShowLayoutBoxes,
+    setShowTextContent,
+    setShowImageRegions,
+    setShowTableRegions,
+    loadFiles,
     loadLayoutFiles,
     toggleLayoutView,
     toggleOutline,
-    setSelectedPage,
     toggleLayoutBoxes,
     toggleTextContent,
+    clearFiles,
     handleKeyAction,
     
     // 计算属性
@@ -242,7 +223,13 @@ export function useLayoutManager() {
     getCurrentPageContent,
     
     // 状态检查
-    hasFiles: !!(state.files.modelData && state.files.middleData && state.files.contentList),
-    totalPages: state.files.modelData?.length || 0
+    hasFiles: !!(files.modelData && files.middleData && files.contentList),
+    totalPages: files.modelData?.length || 0,
+    
+    // 分析数据（暂时为null，后续可以添加实际的分析逻辑）
+    analysis: files.modelData ? {
+      outline: [], // TODO: 从数据中提取大纲
+      structuredContent: [] // TODO: 从数据中提取结构化内容
+    } : null
   };
-} 
+}; 

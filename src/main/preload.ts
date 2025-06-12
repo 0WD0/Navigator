@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   
   // 事件监听
-  onMenuAction: (callback: (event: any, action: string) => void) => {
+  onMenuAction: (callback: (_event: any, _action: string) => void) => {
     ipcRenderer.on('menu-action', callback)
     return () => ipcRenderer.removeListener('menu-action', callback)
   }
