@@ -4,10 +4,10 @@
   "description": "引用导航器 - 以批注为核心的知识管理系统",
   "main": "dist-electron/main.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
+    "dev": "concurrently \"bun run dev:vite\" \"bun run dev:electron\"",
     "dev:vite": "vite",
-    "dev:electron": "wait-on tcp:3000 && npm run build:electron && electron .",
-    "build": "npm run build:vite && npm run build:electron && electron-builder",
+    "dev:electron": "wait-on tcp:3000 && bun run build:electron && electron .",
+    "build": "bun run build:vite && bun run build:electron && electron-builder",
     "build:vite": "vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "preview": "vite preview",
@@ -17,7 +17,7 @@
     "format:check": "prettier --check src/**/*.{ts,tsx,js,jsx,json,css,md}",
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist dist-electron",
-    "clean:install": "rimraf node_modules package-lock.json && npm install",
+    "clean:install": "rimraf node_modules package-lock.json && bun install",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
@@ -70,6 +70,5 @@
       "target": "AppImage",
       "category": "Office"
     }
-  },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  }
 }

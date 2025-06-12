@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { PDFViewer } from './components/PDFViewer'
 import { PDFViewerWithLayout } from './components/PDFViewerWithLayout'
 import { StatusBar } from './components/StatusBar'
