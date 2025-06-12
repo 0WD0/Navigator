@@ -15,4 +15,27 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
+}
+
+// Electron API类型定义
+interface ElectronAPI {
+  openPdfFile: () => Promise<string | null>;
+  readPdfFile: (filePath: string) => Promise<ArrayBuffer>;
+  checkFileExists: (filePath: string) => Promise<boolean>;
+  getAppVersion: () => Promise<string>;
+  onMenuAction: (callback: (event: any, action: string) => void) => () => void;
+  
+  // 新增的API
+  openFileDialog: (options: {
+    title?: string;
+    filters?: Array<{ name: string; extensions: string[] }>;
+    properties?: string[];
+  }) => Promise<string | null>;
+  readFileAsText: (filePath: string) => Promise<string>;
+}
+
+declare global {
+  interface Window {
+    electronAPI: ElectronAPI;
+  }
 } 

@@ -1,0 +1,210 @@
+[
+  {
+    "page_idx": 0,
+    "layout_label": "title",
+    "text": "人工智能技术发展现状与趋势分析",
+    "bbox": [50, 50, 545, 100],
+    "type": "heading",
+    "level": 1
+  },
+  {
+    "page_idx": 0,
+    "layout_label": "text",
+    "text": "随着深度学习、机器学习等技术的快速发展，人工智能已经成为当今科技领域最热门的话题之一。本文将从技术发展、应用场景、挑战与机遇等多个角度，深入分析人工智能的发展现状与未来趋势。",
+    "bbox": [50, 120, 545, 300],
+    "type": "paragraph",
+    "level": 0
+  },
+  {
+    "page_idx": 0,
+    "layout_label": "list",
+    "text": "1. 技术发展现状",
+    "bbox": [50, 320, 270, 350],
+    "type": "heading",
+    "level": 2
+  },
+  {
+    "page_idx": 0,
+    "layout_label": "list",
+    "text": "• 深度学习算法突破",
+    "bbox": [50, 350, 270, 380],
+    "type": "list_item",
+    "level": 0
+  },
+  {
+    "page_idx": 0,
+    "layout_label": "list", 
+    "text": "• 计算能力大幅提升",
+    "bbox": [50, 380, 270, 410],
+    "type": "list_item",
+    "level": 0
+  },
+  {
+    "page_idx": 0,
+    "layout_label": "list",
+    "text": "• 数据资源日益丰富",
+    "bbox": [50, 410, 270, 440],
+    "type": "list_item",
+    "level": 0
+  },
+  {
+    "page_idx": 0,
+    "layout_label": "figure",
+    "text": "图1: AI技术发展时间线",
+    "bbox": [290, 320, 545, 450],
+    "type": "figure_caption",
+    "level": 0
+  },
+  {
+    "page_idx": 1,
+    "layout_label": "title",
+    "text": "应用场景与案例分析",
+    "bbox": [50, 50, 545, 90],
+    "type": "heading",
+    "level": 1
+  },
+  {
+    "page_idx": 1,
+    "layout_label": "table",
+    "text": "应用领域 | 具体应用 | 发展阶段",
+    "bbox": [50, 110, 545, 140],
+    "type": "table_header",
+    "level": 0
+  },
+  {
+    "page_idx": 1,
+    "layout_label": "table",
+    "text": "医疗健康 | 医学影像诊断 | 成熟期",
+    "bbox": [50, 140, 545, 170],
+    "type": "table_row",
+    "level": 0
+  },
+  {
+    "page_idx": 1,
+    "layout_label": "table",
+    "text": "自动驾驶 | 无人车辆 | 发展期",
+    "bbox": [50, 170, 545, 200],
+    "type": "table_row",
+    "level": 0
+  },
+  {
+    "page_idx": 1,
+    "layout_label": "table",
+    "text": "金融服务 | 风险评估 | 成熟期",
+    "bbox": [50, 200, 545, 230],
+    "type": "table_row",
+    "level": 0
+  },
+  {
+    "page_idx": 1,
+    "layout_label": "table",
+    "text": "教育培训 | 个性化学习 | 起步期",
+    "bbox": [50, 230, 545, 260],
+    "type": "table_row",
+    "level": 0
+  },
+  {
+    "page_idx": 1,
+    "layout_label": "text",
+    "text": "在各个应用领域中，人工智能技术正在发挥着越来越重要的作用。医疗健康领域的应用最为成熟，已经在影像诊断、药物研发等方面取得重大突破。自动驾驶技术虽然仍在发展阶段，但技术进步迅速，预计未来几年将实现商业化应用。",
+    "bbox": [50, 320, 545, 500],
+    "type": "paragraph",
+    "level": 0
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "title",
+    "text": "未来发展趋势与挑战",
+    "bbox": [50, 50, 545, 90],
+    "type": "heading",
+    "level": 1
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "list",
+    "text": "发展趋势：",
+    "bbox": [50, 110, 270, 140],
+    "type": "heading",
+    "level": 2
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "list",
+    "text": "• 多模态AI技术融合",
+    "bbox": [50, 140, 270, 170],
+    "type": "list_item",
+    "level": 0
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "list",
+    "text": "• 边缘计算普及",
+    "bbox": [50, 170, 270, 200],
+    "type": "list_item",
+    "level": 0
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "list",
+    "text": "• AI伦理标准建立",
+    "bbox": [50, 200, 270, 230],
+    "type": "list_item",
+    "level": 0
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "list",
+    "text": "• 产业生态完善",
+    "bbox": [50, 230, 270, 260],
+    "type": "list_item", 
+    "level": 0
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "list",
+    "text": "主要挑战：",
+    "bbox": [290, 110, 545, 140],
+    "type": "heading",
+    "level": 2
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "list",
+    "text": "• 数据隐私保护",
+    "bbox": [290, 140, 545, 170],
+    "type": "list_item",
+    "level": 0
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "list",
+    "text": "• 算法透明度",
+    "bbox": [290, 170, 545, 200],
+    "type": "list_item",
+    "level": 0
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "list",
+    "text": "• 技术标准统一",
+    "bbox": [290, 200, 545, 230],
+    "type": "list_item",
+    "level": 0
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "list",
+    "text": "• 人才培养需求",
+    "bbox": [290, 230, 545, 260],
+    "type": "list_item",
+    "level": 0
+  },
+  {
+    "page_idx": 2,
+    "layout_label": "text",
+    "text": "总结：人工智能技术的发展前景广阔，但同时也面临着诸多挑战。只有在技术创新、伦理规范、标准制定等方面协调发展，才能实现人工智能技术的可持续发展，为人类社会带来更大的价值。",
+    "bbox": [50, 300, 545, 450],
+    "type": "paragraph",
+    "level": 0
+  }
+] 

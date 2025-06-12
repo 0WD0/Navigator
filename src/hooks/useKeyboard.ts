@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState } from 'react'
 import { useNavigationStore } from '../store/navigation'
 import { keySequenceStateMachine, KeyAction } from '../utils/keymap'
+import { useLayoutManager } from './useLayoutManager'
 
 type VimMode = 'normal' | 'insert' | 'command'
 
@@ -18,6 +19,8 @@ export const useKeyboard = () => {
     currentPage,
     totalPages
   } = useNavigationStore()
+
+  const layoutManager = useLayoutManager()
 
   // 设置动作执行器和UI重置回调
   useEffect(() => {
@@ -106,6 +109,33 @@ export const useKeyboard = () => {
         setShowHelp((prev: boolean) => !prev)
         break
       
+      // 布局相关动作
+      case 'layout.loadFiles':
+        layoutManager.loadLayoutFiles()
+        break
+      case 'layout.toggleView':
+        layoutManager.toggleLayoutView()
+        break
+      case 'layout.toggleOutline':
+        layoutManager.toggleOutline()
+        break
+      case 'layout.nextPage':
+        if (layoutManager.selectedPage < layoutManager.totalPages - 1) {
+          layoutManager.setSelectedPage(layoutManager.selectedPage + 1)
+        }
+        break
+      case 'layout.previousPage':
+        if (layoutManager.selectedPage > 0) {
+          layoutManager.setSelectedPage(layoutManager.selectedPage - 1)
+        }
+        break
+      case 'layout.toggleLayoutBoxes':
+        layoutManager.toggleLayoutBoxes()
+        break
+      case 'layout.toggleTextContent':
+        layoutManager.toggleTextContent()
+        break
+      
       default:
         console.warn('未知动作:', action.action)
     }
@@ -145,6 +175,12 @@ export const useKeyboard = () => {
       if (event.key === 'o' || event.key === 'O') {
         // Ctrl+O 打开文件
         window.electronAPI?.openPdfFile?.()
+        return
+      }
+      if (event.key === 'l' || event.key === 'L') {
+        // Ctrl+L 加载布局文件
+        event.preventDefault()
+        layoutManager.loadLayoutFiles()
         return
       }
       // 其他 Ctrl 组合键不处理，让默认行为执行

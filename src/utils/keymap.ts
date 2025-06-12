@@ -183,6 +183,38 @@ export class KeySequenceStateMachine {
       action: 'help.toggle',
       description: '显示/隐藏帮助'
     })
+
+    // 布局和文档分析相关快捷键
+    this.trie.addSequence(['v', 'l'], {
+      action: 'layout.toggleView', 
+      description: '切换布局视图'
+    })
+
+    this.trie.addSequence(['v', 'o'], {
+      action: 'layout.toggleOutline',
+      description: '切换文档大纲'
+    })
+
+    this.trie.addSequence(['v', 'b'], {
+      action: 'layout.toggleLayoutBoxes',
+      description: '切换布局框显示'
+    })
+
+    this.trie.addSequence(['v', 't'], {
+      action: 'layout.toggleTextContent',
+      description: '切换文本内容显示'
+    })
+
+    // 布局模式下的页面导航
+    this.trie.addSequence(['p', 'j'], {
+      action: 'layout.nextPage',
+      description: '布局视图下一页'
+    })
+
+    this.trie.addSequence(['p', 'k'], {
+      action: 'layout.previousPage',
+      description: '布局视图上一页'
+    })
   }
 
   // 处理按键输入

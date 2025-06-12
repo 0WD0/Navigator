@@ -26,6 +26,7 @@
 
 ## 📖 文档指南
 
+- **[📖 用户使用指南](docs/user-guide.md)** - 完整的功能使用说明，快速上手所有特性
 - **[📋 Electron 开发指南](docs/electron-development-guide.md)** - 完整的开发文档，适合第一次接触 Electron 的开发者
 - **[🏗️ 技术架构设计](architecture.md)** - 系统架构和技术选型详解
 
@@ -50,6 +51,21 @@ npm run dev
 
 这会同时启动Vite开发服务器和Electron应用。
 
+### 体验功能
+
+1. **PDF查看器模式**：
+   - 使用 `Ctrl+O` 打开PDF文件
+   - 支持完整的vim式键盘导航
+
+2. **布局分析模式**：
+   - 点击右上角"布局视图"按钮切换
+   - 使用 `Ctrl+L` 加载布局分析文件
+   - **新功能：智能叠加显示** - 布局检测框直接显示在PDF内容上，不同颜色表示不同类型（标题、文本、列表、表格、图片等）
+   - 可以直接加载 `examples/` 目录下的示例文件：
+     - `sample-model.json` - 布局检测模型数据
+     - `sample-middle.json` - 中间处理数据
+     - `sample-content-list.json` - 结构化内容数据
+
 ## 🎹 键盘快捷键
 
 ### 基础导航
@@ -71,8 +87,17 @@ npm run dev
 - `:123` - 跳转到第123页
 - `:view outline` - 切换视图 (开发中)
 
+### 布局分析模式
+- `vl` - 切换布局视图
+- `vo` - 切换文档大纲
+- `vb` - 切换布局框显示
+- `vt` - 切换文本内容显示
+- `pj` - 布局视图下一页
+- `pk` - 布局视图上一页
+
 ### 其他操作
 - `Ctrl+O` - 打开PDF文件
+- `Ctrl+L` - 加载布局分析文件
 - `?` - 显示/隐藏帮助
 - `i` - 进入插入模式 (批注功能开发中)
 - `Esc` - 返回普通模式
@@ -106,11 +131,15 @@ navigator/
 ### ✅ 已实现
 - **vim-style键盘控制** - 完全键盘驱动的操作体验
 - **PDF查看器** - 基于PDF.js的高质量PDF渲染
+- **布局分析器** - 文档布局检测和可视化系统
+- **智能布局叠加** - 布局检测框直接叠加在PDF内容上，支持多种布局类型的颜色区分
+- **多视图支持** - PDF视图和布局分析视图的无缝切换
 - **多模式支持** - Normal/Insert/Command模式切换
 - **状态栏显示** - 实时显示当前模式和文档信息
 - **快捷键帮助** - 内置快捷键参考面板
-- **文件加载** - 支持通过对话框打开PDF文件
+- **文件加载** - 支持PDF文件和布局分析JSON文件
 - **错误处理** - 完善的PDF加载错误处理和用户反馈
+- **示例数据** - 提供完整的示例数据用于功能演示
 
 ### 🚧 开发中
 - **批注系统** - 广义批注和引用管理
@@ -123,9 +152,75 @@ navigator/
 
 - **前端**: React 18 + TypeScript + Tailwind CSS
 - **桌面**: Electron + Vite
-- **PDF处理**: PDF.js
+- **PDF处理**: PDF.js + 高级布局分析
 - **状态管理**: Zustand
 - **构建工具**: Vite + TypeScript
+
+## 🔬 高级PDF布局分析
+
+Navigator集成了先进的PDF结构化分析技术，基于[MinerU](https://mineru.readthedocs.io/en/latest/user_guide/pipe_result.html)等项目的设计理念，实现了全面的文档结构理解：
+
+### 📊 核心能力
+
+- **智能布局检测**: 自动识别文档的版面结构，区分垂直和水平布局
+- **多模态内容识别**: 精确识别文本、标题、图像、表格、公式等不同类型的内容
+- **层次化数据结构**: 采用4层嵌套结构（页面→块→行→片段）完整描述PDF内容
+- **实时可视化**: 布局分析结果实时叠加显示，不同颜色标识不同内容类型
+- **置信度评估**: 每个识别结果都包含置信度分数，支持质量控制
+
+### 🎨 可视化功能
+
+- **布局框显示**: 绿色虚线框显示整体布局结构
+- **内容块标识**: 
+  - 🟦 蓝色 - 正文文本
+  - 🟩 绿色 - 标题
+  - 🟧 橙色 - 图像区域
+  - 🟥 红色 - 表格区域
+  - 🟪 紫色 - 数学公式
+- **交互式选择**: 点击任意内容块查看详细信息
+- **片段级分析**: 可展开显示最小语义单元的识别结果
+
+### 📈 质量指标
+
+- **布局检测准确率**: 版面分析的准确程度
+- **文本提取完整率**: 文本内容识别的完整性
+- **结构一致性**: 文档结构识别的一致性
+- **总体置信度**: 整页分析结果的综合评分
+
+### 🛠️ 技术实现
+
+基于类似MinerU的处理管道，采用以下数据结构：
+
+```typescript
+// 页面信息
+interface PageInfo {
+  page_idx: number;           // 页码
+  page_size: [number, number]; // 页面尺寸
+  layout_bboxes: LayoutBox[];  // 布局框
+  para_blocks: Block[];       // 段落块
+  images: ImageBlock[];       // 图像块
+  tables: TableBlock[];       // 表格块
+  interline_equations: EquationBlock[]; // 公式块
+}
+
+// 块结构 (支持嵌套)
+interface Block {
+  type: BlockType;           // 块类型
+  bbox: BoundingBox;         // 边界框
+  lines: Line[];            // 包含的行
+  confidence?: number;       // 置信度
+}
+
+// 最小语义单元
+interface Span {
+  type: SpanType;           // 片段类型
+  content: string;          // 文本内容
+  bbox: BoundingBox;        // 位置信息
+  style?: TextStyle;        // 样式信息
+}
+```
+
+详细的技术文档和实现指南请参考：**[📋 PDF高级布局分析技术文档](docs/pdf-layout-analysis.md)**
 
 ## 🛠️ 开发脚本
 

@@ -7,6 +7,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readPdfFile: (filePath: string) => ipcRenderer.invoke('read-pdf-file', filePath),
   checkFileExists: (filePath: string) => ipcRenderer.invoke('check-file-exists', filePath),
   
+  // 新增：文件对话框和文本文件读取
+  openFileDialog: (options: any) => ipcRenderer.invoke('open-file-dialog', options),
+  readFileAsText: (filePath: string) => ipcRenderer.invoke('read-file-as-text', filePath),
+  
   // 应用信息
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   

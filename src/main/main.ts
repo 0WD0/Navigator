@@ -107,4 +107,38 @@ ipcMain.handle('check-file-exists', async (event: any, filePath: string) => {
 
 ipcMain.handle('get-app-version', () => {
   return app.getVersion()
+})
+
+// 新增：通用文件对话框
+ipcMain.handle('open-file-dialog', async (event: any, options: any) => {
+  if (!mainWindow) return null
+  
+  const result = await dialog.showOpenDialog(mainWindow, options)
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    const filePath = result.filePaths[0]
+    console.log('选择的文件:', filePath)
+    
+    // 验证文件是否存在且可读
+    try {
+      await fs.promises.access(filePath, fs.constants.R_OK)
+      return filePath
+    } catch (error) {
+      console.error('文件访问失败:', error)
+      return null
+    }
+  }
+  return null
+})
+
+// 新增：读取文本文件
+ipcMain.handle('read-file-as-text', async (event: any, filePath: string) => {
+  try {
+    console.log('读取文本文件:', filePath)
+    const content = await fs.promises.readFile(filePath, 'utf8')
+    return content
+  } catch (error) {
+    console.error('读取文本文件失败:', error)
+    throw error
+  }
 }) 
