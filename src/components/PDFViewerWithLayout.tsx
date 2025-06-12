@@ -1,131 +1,114 @@
-import React, { useState } from 'react';
-import { useLayoutManager } from '@/hooks/useLayoutManager';
-import { SimpleLayoutViewer } from './SimpleLayoutViewer';
-import DocumentOutline from './DocumentOutline';
+import React, { useState, useCallback } from 'react';
 import { PDFViewerWithOverlay } from './PDFViewerWithOverlay';
-import { PageInfo } from '@/types/pdf-analysis';
+import { MineruLayoutViewer } from './MineruLayoutViewer';
+import { DocumentOutlineComponent as DocumentOutline } from './DocumentOutline';
+import { useLayoutManager } from '@/hooks/useLayoutManager';
 
 interface PDFViewerWithLayoutProps {
-  className?: string;
   filePath?: string;
-  mineruData?: PageInfo[] | null;
   onFileOpen?: () => void;
+  className?: string;
 }
 
-export const PDFViewerWithLayout: React.FC<PDFViewerWithLayoutProps> = ({ 
-  className = '',
-  filePath = '',
-  mineruData,
-  onFileOpen
+export const PDFViewerWithLayout: React.FC<PDFViewerWithLayoutProps> = ({
+  filePath,
+  onFileOpen,
+  className = ''
 }) => {
   const layoutManager = useLayoutManager();
-  const [sidebarWidth, setSidebarWidth] = useState(300);
-  const [isResizing, setIsResizing] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [activeTab, setActiveTab] = useState<'layout' | 'outline'>('layout');
 
-  // 处理侧边栏拖拽调整大小
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsResizing(true);
-    e.preventDefault();
-  };
+  // 拖拽调整侧边栏宽度
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    const startX = e.clientX;
+    const startWidth = sidebarWidth;
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isResizing) return;
-    const newWidth = Math.max(200, Math.min(600, e.clientX));
-    setSidebarWidth(newWidth);
-  };
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = startWidth + (e.clientX - startX);
+      setSidebarWidth(Math.max(250, Math.min(600, newWidth)));
+    };
 
-  const handleMouseUp = () => {
-    setIsResizing(false);
-  };
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
 
-  React.useEffect(() => {
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isResizing]);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [sidebarWidth]);
+
+  // 确定是否显示侧边栏
+  const showSidebar = layoutManager.hasFiles && (layoutManager.isLayoutViewVisible || layoutManager.isOutlineVisible);
 
   return (
-    <div className={`flex h-full bg-gray-100 ${className}`}>
+    <div className={`flex h-full bg-gray-50 ${className}`}>
       {/* 侧边栏 */}
-      {(layoutManager.isLayoutViewVisible || layoutManager.isOutlineVisible) && (
+      {showSidebar && (
         <>
           <div 
-            className="bg-white border-r border-gray-200 flex flex-col"
+            className="bg-white border-r border-gray-200 flex flex-col shadow-sm"
             style={{ width: sidebarWidth }}
           >
             {/* 侧边栏标签页 */}
-            <div className="flex border-b border-gray-200">
+            <div className="flex border-b border-gray-200 bg-gray-50">
               {layoutManager.isLayoutViewVisible && (
                 <button
-                  onClick={() => {
-                    if (!layoutManager.isLayoutViewVisible) {
-                      layoutManager.toggleLayoutView();
-                    }
-                  }}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 ${
-                    layoutManager.isLayoutViewVisible
-                      ? 'border-blue-500 text-blue-600 bg-blue-50'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  onClick={() => setActiveTab('layout')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'layout'
+                      ? 'bg-white text-blue-600 border-b-2 border-blue-500'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
                   }`}
                 >
-                  布局视图
+                  📊 布局分析
                 </button>
               )}
-              {layoutManager.isOutlineVisible && (
+              {layoutManager.isOutlineVisible && layoutManager.analysis && (
                 <button
-                  onClick={() => {
-                    if (!layoutManager.isOutlineVisible) {
-                      layoutManager.toggleOutline();
-                    }
-                  }}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 ${
-                    layoutManager.isOutlineVisible
-                      ? 'border-blue-500 text-blue-600 bg-blue-50'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  onClick={() => setActiveTab('outline')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'outline'
+                      ? 'bg-white text-blue-600 border-b-2 border-blue-500'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
                   }`}
                 >
-                  文档大纲
+                  📋 文档大纲
                 </button>
               )}
             </div>
 
-                         {/* 侧边栏内容 */}
-             <div className="flex-1 overflow-hidden">
-               {layoutManager.isLayoutViewVisible && (
-                 <SimpleLayoutViewer 
-                   modelData={layoutManager.files.modelData}
-                   contentList={layoutManager.files.contentList}
-                   selectedPage={layoutManager.selectedPage}
-                   showLayoutBoxes={layoutManager.showLayoutBoxes}
-                   showTextContent={layoutManager.showTextContent}
-                   onPageChange={layoutManager.setSelectedPage}
-                   onToggleLayoutBoxes={layoutManager.toggleLayoutBoxes}
-                   onToggleTextContent={layoutManager.toggleTextContent}
-                   className="h-full"
-                 />
-               )}
-              {layoutManager.isOutlineVisible && layoutManager.analysis && (
-                                 <DocumentOutline
-                   outline={layoutManager.analysis.outline}
-                   onNavigate={(pageIndex: number) => {
-                     layoutManager.setSelectedPage(pageIndex);
-                     // TODO: 同步到PDF查看器
-                   }}
-                   currentPage={layoutManager.selectedPage}
-                   className="h-full"
-                 />
+            {/* 侧边栏内容 */}
+            <div className="flex-1 overflow-hidden">
+              {activeTab === 'layout' && layoutManager.isLayoutViewVisible && (
+                <MineruLayoutViewer 
+                  mineruData={layoutManager.files.mineruData}
+                  contentList={layoutManager.files.contentList}
+                  selectedPage={layoutManager.selectedPage}
+                  showLayoutBoxes={layoutManager.showLayoutBoxes}
+                  showTextContent={layoutManager.showTextContent}
+                  onPageChange={layoutManager.setSelectedPage}
+                  onToggleLayoutBoxes={layoutManager.toggleLayoutBoxes}
+                  onToggleTextContent={layoutManager.toggleTextContent}
+                  className="h-full"
+                />
+              )}
+              {activeTab === 'outline' && layoutManager.isOutlineVisible && layoutManager.analysis && (
+                <DocumentOutline
+                  outline={layoutManager.analysis.outline}
+                  onNavigate={(pageIndex: number) => {
+                    layoutManager.setSelectedPage(pageIndex);
+                  }}
+                  currentPage={layoutManager.selectedPage}
+                  className="h-full"
+                />
               )}
             </div>
           </div>
 
           {/* 拖拽调整大小的分隔条 */}
           <div
-            className="w-1 bg-gray-200 hover:bg-gray-300 cursor-col-resize"
+            className="w-1 bg-gray-200 hover:bg-blue-400 cursor-col-resize transition-colors"
             onMouseDown={handleMouseDown}
           />
         </>
@@ -133,124 +116,120 @@ export const PDFViewerWithLayout: React.FC<PDFViewerWithLayoutProps> = ({
 
       {/* 主要内容区域 */}
       <div className="flex-1 flex flex-col">
-        {/* 工具栏 */}
-        <div className="bg-white border-b border-gray-200 p-4">
+        {/* 简化的工具栏 */}
+        <div className="bg-white border-b border-gray-200 px-6 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-lg font-semibold text-gray-800">PDF 导航器</h1>
+            {/* 左侧：标题和状态 */}
+            <div className="flex items-center gap-6">
+              <h1 className="text-lg font-semibold text-gray-800">Navigator</h1>
               
-              {/* 快捷键提示 */}
-              <div className="text-sm text-gray-500">
-                <span className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">Ctrl+L</span>
-                <span className="ml-1">加载布局文件</span>
-              </div>
+              {layoutManager.hasFiles && (
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <span>第 {layoutManager.selectedPage + 1} 页 / 共 {layoutManager.totalPages} 页</span>
+                  {layoutManager.analysis && (
+                    <span>• {layoutManager.analysis.outline.length} 个大纲项目</span>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* 布局控制按钮 */}
-              <button
-                onClick={layoutManager.toggleLayoutView}
-                className={`px-3 py-1 text-sm rounded ${
-                  layoutManager.isLayoutViewVisible
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                布局视图
-              </button>
+            {/* 右侧：主要操作按钮 */}
+            <div className="flex items-center gap-3">
+              {/* 视图切换 */}
+              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={layoutManager.toggleLayoutView}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-all ${
+                    layoutManager.isLayoutViewVisible
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  布局
+                </button>
+                
+                <button
+                  onClick={layoutManager.toggleOutline}
+                  disabled={!layoutManager.analysis}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-all ${
+                    layoutManager.isOutlineVisible
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed'
+                  }`}
+                >
+                  大纲
+                </button>
+              </div>
+
+              {/* 主要操作 */}
+              {!filePath && (
+                <button
+                  onClick={onFileOpen}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  📄 打开PDF
+                </button>
+              )}
               
               <button
-                onClick={layoutManager.toggleOutline}
-                disabled={!layoutManager.analysis}
-                className={`px-3 py-1 text-sm rounded ${
-                  layoutManager.isOutlineVisible
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50'
-                }`}
-              >
-                文档大纲
-              </button>
-
-              <button
-                onClick={() => {
-                  if (onFileOpen) {
-                    onFileOpen()
-                  }
-                }}
-                className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                打开PDF
-              </button>
-
-              <button
-                onClick={layoutManager.loadLayoutFiles}
+                onClick={layoutManager.loadMineruFile}
                 disabled={layoutManager.isLoading}
-                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors text-sm font-medium"
               >
-                {layoutManager.isLoading ? '加载中...' : '加载布局'}
+                {layoutManager.isLoading ? '⏳ 加载中...' : '📊 加载 MinerU'}
               </button>
             </div>
           </div>
-
-          {/* 状态信息 */}
-          {layoutManager.hasFiles && (
-            <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
-              <span>页面: {layoutManager.selectedPage + 1} / {layoutManager.totalPages}</span>
-              {layoutManager.analysis && (
-                <>
-                  <span>大纲项目: {layoutManager.analysis.outline.length}</span>
-                  <span>内容项目: {layoutManager.analysis.structuredContent.length}</span>
-                </>
-              )}
-            </div>
-          )}
         </div>
 
         {/* PDF 查看区域 */}
-        <div className="flex-1 bg-gray-50 p-4">
-          {!layoutManager.hasFiles ? (
+        <div className="flex-1 p-4">
+          {!layoutManager.hasFiles && !filePath ? (
+            // 欢迎界面
             <div className="h-full flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-6xl mb-4">📄</div>
-                <h2 className="text-xl font-semibold text-gray-700 mb-2">
-                  PDF 导航器 - 布局分析模式
+              <div className="text-center max-w-md">
+                <div className="text-6xl mb-6">📚</div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                  欢迎使用 Navigator
                 </h2>
-                <p className="text-gray-500 mb-4">
-                  {filePath ? 
-                    "PDF已加载，请加载布局文件以查看分析结果" : 
-                    "请先打开PDF文件，然后加载布局数据"
-                  }
+                <p className="text-gray-600 mb-8 leading-relaxed">
+                  智能PDF文档分析工具，支持布局识别、大纲提取和结构化导航
                 </p>
-                <div className="space-y-2">
+                
+                <div className="space-y-3">
                   {!filePath && (
                     <button
-                      onClick={() => onFileOpen?.()}
-                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 mr-2"
+                      onClick={onFileOpen}
+                      className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                     >
-                      打开PDF文件
+                      📄 打开PDF文件
                     </button>
                   )}
                   <button
-                    onClick={layoutManager.loadLayoutFiles}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    onClick={layoutManager.loadMineruFile}
+                    className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
                   >
-                    加载布局文件
+                    📊 加载 MinerU 数据
                   </button>
                 </div>
-                <div className="mt-4 text-sm text-gray-400">
-                  <div>快捷键: <kbd className="bg-gray-200 px-2 py-1 rounded text-xs">Ctrl+O</kbd> 打开PDF | <kbd className="bg-gray-200 px-2 py-1 rounded text-xs">Ctrl+L</kbd> 加载布局</div>
+                
+                <div className="mt-8 text-sm text-gray-500">
+                  <div className="mb-2">快捷键提示：</div>
+                  <div className="flex justify-center gap-4">
+                    <span><kbd className="bg-gray-200 px-2 py-1 rounded text-xs">Ctrl+O</kbd> 打开PDF</span>
+                    <span><kbd className="bg-gray-200 px-2 py-1 rounded text-xs">Ctrl+L</kbd> 加载数据</span>
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="h-full bg-white rounded-lg shadow-sm border">
-              {/* 集成PDF查看器并叠加布局框 */}
+            // PDF内容区域
+            <div className="h-full bg-white rounded-lg shadow-sm border overflow-hidden">
               {filePath ? (
                 <PDFViewerWithOverlay 
                   filePath={filePath}
-                  layoutData={layoutManager.files.modelData}
-                  mineruData={mineruData || null}
-                  selectedPage={layoutManager.selectedPage}
+                  layoutData={null}
+                  mineruData={layoutManager.files.mineruData || null}
                   showLayoutBoxes={layoutManager.showLayoutBoxes}
                   showTextContent={layoutManager.showTextContent}
                   showImageRegions={true}
@@ -259,11 +238,15 @@ export const PDFViewerWithLayout: React.FC<PDFViewerWithLayoutProps> = ({
               ) : (
                 <div className="h-full flex items-center justify-center text-gray-500">
                   <div className="text-center">
-                    <div className="text-4xl mb-2">📄</div>
-                    <div>请打开PDF文件以查看内容</div>
-                    <div className="text-sm mt-1 text-gray-400">
-                      使用 Ctrl+O 打开PDF文件
-                    </div>
+                    <div className="text-4xl mb-4">📄</div>
+                    <div className="text-lg font-medium mb-2">数据已加载</div>
+                    <div className="text-sm">请打开PDF文件以查看叠加效果</div>
+                    <button
+                      onClick={onFileOpen}
+                      className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      打开PDF文件
+                    </button>
                   </div>
                 </div>
               )}
@@ -272,15 +255,24 @@ export const PDFViewerWithLayout: React.FC<PDFViewerWithLayoutProps> = ({
         </div>
       </div>
 
-      {/* 快捷键帮助浮层 */}
-      <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white p-3 rounded-lg text-sm">
-        <div className="font-medium mb-2">快捷键</div>
-        <div className="space-y-1">
-          <div><kbd className="bg-gray-700 px-1 rounded">Ctrl+L</kbd> 加载布局文件</div>
-          <div><kbd className="bg-gray-700 px-1 rounded">Ctrl+O</kbd> 切换大纲</div>
-          <div><kbd className="bg-gray-700 px-1 rounded">Ctrl+Shift+L</kbd> 切换布局视图</div>
+      {/* 错误提示 */}
+      {layoutManager.error && (
+        <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg max-w-sm">
+          <div className="flex items-center gap-2">
+            <span>⚠️</span>
+            <div>
+              <div className="font-medium">加载失败</div>
+              <div className="text-sm opacity-90">{layoutManager.error}</div>
+            </div>
+            <button
+              onClick={() => layoutManager.clearFiles()}
+              className="ml-2 text-white hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
